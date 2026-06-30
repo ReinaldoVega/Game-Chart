@@ -7,10 +7,12 @@ from config import *
 from csv_export import export_chart_csv
 from pdf_export import export_chart_pdf
 
+from database import load_games, save_game, delete_game, get_game
+
 
 st.set_page_config(
-    page_title=APP_TITLE,
-    page_icon="⚾",
+    page_title="TigerVision Charting",
+    page_icon="🐅",
     layout="wide",
 )
 
@@ -29,9 +31,47 @@ def blank_ab():
         "situation": "",
         "comment": "",
     }
+    
+def new_game():
+    for key in ["game_info", "lineup", "chart_data"]:
+        if key in st.session_state:
+            del st.session_state[key]
+
+    st.session_state.active_abs = DEFAULT_ABS
+    st.session_state.selected_player = 0
+    st.session_state.selected_ab = 1
+    st.session_state.screen = "chart"
+    init_state()
+    st.rerun()
+
+
+def open_game(game_id):
+    game = get_game(game_id)
+
+    if game:
+        st.session_state.game_info = game["game_info"]
+        st.session_state.lineup = game["lineup"]
+        st.session_state.chart_data = game["chart_data"]
+        st.session_state.active_abs = game.get("active_abs", DEFAULT_ABS)
+        st.session_state.selected_player = 0
+        st.session_state.selected_ab = 1
+        st.session_state.screen = "chart"
+        st.rerun()
+
+
+def save_current_game():
+    game_id = save_game(
+        st.session_state.game_info,
+        st.session_state.lineup,
+        st.session_state.chart_data,
+        st.session_state.active_abs,
+    )
+    st.session_state.game_info["game_id"] = game_id
+    st.success("Game saved.")
 
 
 def init_state():
+    st.session_state.setdefault("screen", "game_center")
     st.session_state.setdefault("active_abs", DEFAULT_ABS)
     st.session_state.setdefault("selected_player", 0)
     st.session_state.setdefault("selected_ab", 1)
@@ -43,7 +83,7 @@ def init_state():
             "opponent": "",
             "home_away": "",
             "game_number": "",
-            "inning": "",
+            "innings": "",
             "score": "",
             "notes": "",
         }
@@ -208,14 +248,111 @@ def css():
         unsafe_allow_html=True,
     )
 
-
-def header():
+def game_center():
     st.markdown(
         """
         <div class="main-header">
-            <h1>⚾ Tigers At-Bat Chart 3.0</h1>
-            <p>Modern quick-charting system with PH/Sub, extra ABs, pitch location, contact info and export.</p>
+            <h1>🐅 TigerVision</h1>
+            <p>Game Center — create, continue, and manage charted games.</p>
         </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("<div class='panel'>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>Game Center</div>", unsafe_allow_html=True)
+
+    if st.button("➕ New Game", use_container_width=True):
+        new_game()
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    games = load_games()
+
+    st.markdown("<div class='panel'>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>Recent Games</div>", unsafe_allow_html=True)
+
+    if not games:
+        st.info("No saved games yet.")
+    else:
+        sorted_games = sorted(
+            games.values(),
+            key=lambda g: g.get("saved_at", ""),
+            reverse=True,
+        )
+
+        for game in sorted_games:
+            game_id = game["game_id"]
+            info = game["game_info"]
+
+            team = info.get("team", "Team")
+            opponent = info.get("opponent", "Opponent")
+            date_txt = info.get("date", "")
+            game_number = info.get("game_number", "")
+            saved_at = game.get("saved_at", "")
+
+            c1, c2, c3 = st.columns([3, 1, 1])
+
+            with c1:
+                st.markdown(
+                    f"""
+                    <div class="ab-card">
+                        <div class="ab-number">{date_txt} • Game {game_number}</div>
+                        <div class="ab-result" style="font-size:20px;">{team} vs {opponent}</div>
+                        <div class="muted">Last saved: {saved_at}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            with c2:
+                if st.button("Continue", key=f"open_{game_id}", use_container_width=True):
+                    open_game(game_id)
+
+            with c3:
+                if st.button("Delete", key=f"delete_{game_id}", use_container_width=True):
+                    delete_game(game_id)
+                    st.rerun()
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+def header():
+    info = st.session_state.game_info
+
+    date_txt = info.get("date", "")
+    team = info.get("team", "DSL Tigers") or "DSL Tigers"
+    opponent = info.get("opponent", "") or "Opponent"
+    home_away = info.get("home_away", "") or "-"
+    game_number = info.get("game_number", "") or "-"
+    inning = info.get("inning", "") or "-"
+    score = info.get("score", "") or "-"
+
+    st.markdown(
+        f"""
+        <div class="main-header">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:20px;">
+                <div>
+                    <div style="font-size:13px;color:#94A3B8;font-weight:800;letter-spacing:1.8px;">
+                        PROFESSIONAL GAME CHARTING
+                    </div>
+                    <h1>🐅 TigerVision</h1>
+                    <p>Player Development Charting System</p>
+                </div>
+
+                <div style="text-align:right;">
+                    <div style="font-size:18px;font-weight:900;color:white;">
+                        {team} vs {opponent}
+                    </div>
+                    <div style="margin-top:8px;">
+                        <span class="chip">📅 {date_txt}</span>
+                        <span class="chip">🏟️ {home_away}</span>
+                        <span class="chip">⚾ Game {game_number}</span>
+                        <span class="chip">⏱️ {inning}</span>
+                        <span class="chip">📊 {score}</span>
+                    </div>
+                </div>
+            </div>
+        </div> 
         """,
         unsafe_allow_html=True,
     )
@@ -574,7 +711,7 @@ def exports_panel():
                 st.session_state.lineup,
                 st.session_state.chart_data,
             ),
-            file_name="tigers_at_bat_chart.csv",
+            file_name="tiger_vision-chart.csv",
             mime="text/csv",
             use_container_width=True,
         )
@@ -587,7 +724,7 @@ def exports_panel():
                 st.session_state.lineup,
                 st.session_state.chart_data,
             ),
-            file_name="tigers_at_bat_chart.pdf",
+            file_name="tiger_vision-chart.pdf",
             mime="application/pdf",
             use_container_width=True,
         )
@@ -597,18 +734,38 @@ def exports_panel():
 
 init_state()
 css()
-header()
-game_info_panel()
-lineup_panel()
 
-left, right = st.columns([1.1, 2.9])
+if st.session_state.screen == "game_center":
+    game_center()
+else:
+    header()
 
-with left:
-    player_picker()
-    ab_picker()
+    top1, top2, top3 = st.columns([1, 1, 1])
 
-with right:
-    ab_cards()
-    chart_editor()
+    with top1:
+        if st.button("⬅️ Game Center", use_container_width=True):
+            st.session_state.screen = "game_center"
+            st.rerun()
 
-exports_panel()
+    with top2:
+        if st.button("💾 Save Game", use_container_width=True):
+            save_current_game()
+
+    with top3:
+        if st.button("➕ New Game", use_container_width=True):
+            new_game()
+
+    game_info_panel()
+    lineup_panel()
+
+    left, right = st.columns([1.1, 2.9])
+
+    with left:
+        player_picker()
+        ab_picker()
+
+    with right:
+        ab_cards()
+        chart_editor()
+
+    exports_panel()
