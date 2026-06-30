@@ -19,8 +19,17 @@ def ensure_data_file():
 def load_games():
     ensure_data_file()
 
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            content = f.read().strip()
+
+            if not content:
+                return {}
+
+            return json.loads(content)
+
+    except json.JSONDecodeError:
+        return {}
 
 
 def save_games(games):
