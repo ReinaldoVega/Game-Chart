@@ -809,6 +809,7 @@ def exports_panel():
 
 init_state()
 css()
+theme_toggle()
 
 if st.session_state.screen == "game_center":
     game_center()
