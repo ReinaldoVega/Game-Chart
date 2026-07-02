@@ -417,69 +417,53 @@ def result_dot(result):
 # =========================
 
 def game_center():
-    st.markdown(
-        """
-        <div class="main-header">
-            <h1>🐅 TigerVision</h1>
-            <p>Game Center — create, continue, and manage charted games.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown("## 🐅 TigerVision")
+    st.caption("Game Center — create, continue, and manage charted games.")
 
-    st.markdown("<div class='panel'>", unsafe_allow_html=True)
-    st.markdown("<div class='section-title'>Game Center</div>", unsafe_allow_html=True)
+    st.divider()
 
-    if st.button("➕ New Game", use_container_width=True):
+    if st.button("➕ New Game", key="gc_new_game", use_container_width=True):
         new_game()
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.subheader("Recent Games")
 
     games = load_games()
 
-    st.markdown("<div class='panel'>", unsafe_allow_html=True)
-    st.markdown("<div class='section-title'>Recent Games</div>", unsafe_allow_html=True)
-
     if not games:
         st.info("No saved games yet.")
-    else:
-        sorted_games = sorted(games.values(), key=lambda g: g.get("saved_at", ""), reverse=True)
+        return
 
-        for game in sorted_games:
-            game_id = game["game_id"]
-            info = game["game_info"]
+    sorted_games = sorted(
+        games.values(),
+        key=lambda g: g.get("saved_at", ""),
+        reverse=True,
+    )
 
-            team = info.get("team", "Team")
-            opponent = info.get("opponent", "Opponent")
-            date_txt = info.get("date", "")
-            game_number = info.get("game_number", "")
-            saved_at = game.get("saved_at", "")
+    for game in sorted_games:
+        game_id = game["game_id"]
+        info = game["game_info"]
 
-            c1, c2, c3 = st.columns([3, 1, 1])
+        team = info.get("team", "Team")
+        opponent = info.get("opponent", "Opponent")
+        date_txt = info.get("date", "")
+        game_number = info.get("game_number", "")
+        saved_at = game.get("saved_at", "")
 
-            with c1:
-                st.markdown(
-                    f"""
-                    <div class="ab-card">
-                        <div class="ab-number">{date_txt} • Game {game_number}</div>
-                        <div class="ab-result" style="font-size:22px;">{team} vs {opponent}</div>
-                        <div class="muted">Last saved: {saved_at}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+        st.markdown(f"### {team} vs {opponent}")
+        st.caption(f"{date_txt} • Game {game_number} • Last saved: {saved_at}")
 
-            with c2:
-                if st.button("Continue", key=f"open_{game_id}", use_container_width=True):
-                    open_game(game_id)
+        c1, c2 = st.columns(2)
 
-            with c3:
-                if st.button("Delete", key=f"delete_{game_id}", use_container_width=True):
-                    delete_game(game_id)
-                    st.rerun()
+        with c1:
+            if st.button("Continue", key=f"gc_open_{game_id}", use_container_width=True):
+                open_game(game_id)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+        with c2:
+            if st.button("Delete", key=f"gc_delete_{game_id}", use_container_width=True):
+                delete_game(game_id)
+                st.rerun()
 
+        st.divider()
 
 # =========================
 # HEADER
