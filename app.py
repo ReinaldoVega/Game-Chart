@@ -8,6 +8,8 @@ from csv_export import export_chart_csv
 from pdf_export import export_chart_pdf
 from database import load_games, save_game, delete_game, get_game
 from rules_engine import apply_result_rules, contact_fields_should_show
+from workflow_engine import get_next_step_label, get_progress_text
+
 
 st.set_page_config(
     page_title="TigerVision",
@@ -831,6 +833,8 @@ def live_ab_card():
     p = st.session_state.selected_player
     ab = st.session_state.selected_ab
     data = st.session_state.chart_data[p][f"ab_{ab}"]
+    next_step = get_next_step_label(data)
+    progress = get_progress_text(data)
 
     player = st.session_state.lineup[p]
     name = player.get("name", "").strip() or f"Player {p + 1}"
@@ -859,6 +863,8 @@ def live_ab_card():
 <div class="ab-card-filled">
     <div class="ab-number">{p + 1}. {name} • AB {ab}</div>
     <div class="ab-result">{result_dot(data.get("result",""))} {data.get("result") or "-"}</div>
+    <span class="chip">Progress: {progress}</span>
+    <span class="chip">Next: {next_step}</span>
     <div>{chips_html}</div>
     <hr>
     <div class="muted">{comment}</div>

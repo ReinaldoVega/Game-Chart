@@ -1,26 +1,28 @@
 # workflow_engine.py
 
-REQUIRED_BY_RESULT = {
-    "BB": ["result", "pitch", "count", "zone"],
-    "HBP": ["result", "pitch", "count", "zone"],
-    "K Swinging": ["result", "pitch", "count", "zone"],
-    "K Looking": ["result", "pitch", "count", "zone"],
+WORKFLOW_BY_RESULT = {
+    "1B": ["pitch", "zone", "direction", "contact_type", "quality", "comment"],
+    "2B": ["pitch", "zone", "direction", "contact_type", "quality", "comment"],
+    "3B": ["pitch", "zone", "direction", "contact_type", "quality", "comment"],
+    "HR": ["pitch", "zone", "direction", "contact_type", "quality", "comment"],
 
-    "1B": ["result", "pitch", "zone", "contact_type", "direction", "quality"],
-    "2B": ["result", "pitch", "zone", "contact_type", "direction", "quality"],
-    "3B": ["result", "pitch", "zone", "contact_type", "direction", "quality"],
-    "HR": ["result", "pitch", "zone", "contact_type", "direction", "quality"],
+    "BB": ["pitch", "count", "comment"],
+    "HBP": ["pitch", "count", "comment"],
 
-    "GO": ["result", "pitch", "zone", "contact_type", "direction"],
-    "FO": ["result", "pitch", "zone", "contact_type", "direction"],
-    "LO": ["result", "pitch", "zone", "contact_type", "direction"],
-    "PO": ["result", "pitch", "zone", "contact_type", "direction"],
+    "K Swinging": ["pitch", "zone", "count", "comment"],
+    "K Looking": ["pitch", "zone", "count", "comment"],
 
-    "ROE": ["result", "pitch", "zone", "contact_type", "direction"],
-    "FC": ["result", "pitch", "zone", "contact_type", "direction"],
-    "SAC": ["result", "pitch", "zone", "contact_type", "direction"],
-    "SF": ["result", "pitch", "zone", "contact_type", "direction"],
-    "GDP": ["result", "pitch", "zone", "contact_type", "direction"],
+    "GO": ["pitch", "zone", "direction", "contact_type", "quality", "comment"],
+    "FO": ["pitch", "zone", "direction", "contact_type", "quality", "comment"],
+    "LO": ["pitch", "zone", "direction", "contact_type", "quality", "comment"],
+    "PO": ["pitch", "zone", "direction", "contact_type", "quality", "comment"],
+
+    "ROE": ["pitch", "zone", "direction", "contact_type", "quality", "comment"],
+    "FC": ["pitch", "zone", "direction", "contact_type", "quality", "comment"],
+    "SAC": ["pitch", "zone", "direction", "contact_type", "quality", "comment"],
+    "SF": ["pitch", "zone", "direction", "contact_type", "quality", "comment"],
+    "GDP": ["pitch", "zone", "direction", "contact_type", "quality", "comment"],
+    "Other": ["pitch", "zone", "direction", "contact_type", "quality", "comment"],
 }
 
 
@@ -28,65 +30,71 @@ FIELD_LABELS = {
     "result": "Result",
     "pitch": "Pitch Type",
     "velo": "Pitch Velo",
+    "zone": "Pitch Location",
     "count": "Count",
-    "zone": "Pitch Zone",
-    "contact_type": "Contact Type",
     "direction": "Field Direction",
+    "contact_type": "Contact Type",
     "quality": "Contact Quality",
     "situation": "Situation",
     "comment": "Comment",
 }
 
 
-def get_required_fields(ab_data):
-    result = ab_data.get("result", "")
-
+def get_workflow_steps(result):
     if not result:
         return ["result"]
 
-    return REQUIRED_BY_RESULT.get(
+    return ["result"] + WORKFLOW_BY_RESULT.get(
         result,
-        ["result", "pitch", "zone"],
+        ["pitch", "zone", "direction", "contact_type", "quality", "comment"],
     )
 
 
-def get_missing_fields(ab_data):
-    required = get_required_fields(ab_data)
+def get_missing_required_fields(ab_data):
+    result = ab_data.get("result", "")
+
+    steps = get_workflow_steps(result)
 
     missing = []
 
-    for field in required:
-        if not ab_data.get(field):
+    for field in steps:
+        if field == "comment":
+            continue
+
+        if not ab_data.get(field, ""):
             missing.append(field)
 
     return missing
 
 
-def get_completion_status(ab_data):
-    missing = get_missing_fields(ab_data)
-    required = get_required_fields(ab_data)
-
-    total = len(required)
-    completed = total - len(missing)
-
-    if total == 0:
-        pct = 100
-    else:
-        pct = int((completed / total) * 100)
-
-    return {
-        "required": required,
-        "missing": missing,
-        "completed": completed,
-        "total": total,
-        "pct": pct,
-    }
-
-
 def get_next_step(ab_data):
-    missing = get_missing_fields(ab_data)
+    missing = get_missing_required_fields(ab_data)
 
-    if not missing:
-        return "Done"
+    if missing:
+        return missing[0]
 
-    return FIELD_LABELS.get(missing[0], missing[0])
+    return "done"
+
+
+def get_progress_text(ab_data):
+    steps = get_workflow_steps(ab_data.get("result", ""))
+    required_steps = [s for s in steps if s != "comment"]
+
+    completed = 0
+
+    for field in required_steps:
+        if ab_data.get(field, ""):
+            completed += 1
+
+    total = len(required_steps)
+
+    return f"{completed}/{total}"
+
+
+def get_next_step_label(ab_data):
+    next_step = get_next_step(ab_data)
+
+    if next_step == "done":
+        return "Complete"
+
+    return FIELD_LABELS.get(next_step, next_step.title())
