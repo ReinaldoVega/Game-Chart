@@ -13,6 +13,7 @@ from rules_engine import contact_fields_should_show
 from workflow_engine import get_next_step_label, get_progress_text
 from components.strike_zone import render_strike_zone
 from components.field import render_field_direction
+from components.coach_assistant import render_coach_assistant
 
 # =========================
 # LINEUP QUICK PANEL
@@ -191,22 +192,6 @@ def render_field_direction(p, ab, autosave_func):
         button_group("", ["P"], "direction", p, ab, autosave_func, 1)
     with row3[1]:
         button_group("", ["C"], "direction", p, ab, autosave_func, 1)
-
-
-# =========================
-# COACH ASSISTANT
-# =========================
-
-def render_coach_assistant(data):
-    next_step = get_next_step_label(data)
-    progress = get_progress_text(data)
-
-    st.markdown("### 🧠 Coach Assistant")
-
-    if next_step == "Complete":
-        st.success(f"✅ Complete | Progress {progress}")
-    else:
-        st.info(f"Next: {next_step} | Progress {progress}")
 
 
 # =========================
