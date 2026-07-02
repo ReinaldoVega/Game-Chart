@@ -790,12 +790,12 @@ def quick_chart_panel():
     with right:
         strike_zone_visual(p, ab)
 
-if contact_fields_should_show(data.get("result", "")):
-    button_group("⚾ Contact", CONTACT_TYPE_OPTIONS, "contact_type", p, ab, 5)
-    field_direction_visual(p, ab)
-    button_group("🔥 Quality", CONTACT_QUALITY_OPTIONS, "quality", p, ab, 3)
-else:
-    st.info("Contact, direction and quality are not needed for this result.")
+    if contact_fields_should_show(data.get("result", "")):
+         button_group("⚾ Contact", CONTACT_TYPE_OPTIONS, "contact_type", p, ab, 5)
+         field_direction_visual(p, ab)
+         button_group("🔥 Quality", CONTACT_QUALITY_OPTIONS, "quality", p, ab, 3)
+    else:
+         st.info("Contact, direction and quality are not needed for this result.")
 
     data["comment"] = st.text_area(
         "Comment",
