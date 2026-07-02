@@ -823,26 +823,34 @@ def live_ab_card():
     player = st.session_state.lineup[p]
     name = player.get("name", "").strip() or f"Player {p + 1}"
 
+    chips = [
+        f"Pitch: {data.get('pitch','')} {data.get('velo','')}",
+        f"Count: {data.get('count','')}",
+        f"Zone: {data.get('zone','')}",
+        f"Contact: {data.get('contact_type','')}",
+        f"Direction: {data.get('direction','')}",
+        f"Quality: {data.get('quality','')}",
+        f"Situation: {data.get('situation','')}",
+    ]
+
+    chips_html = "".join(
+        [f"<span class='chip'>{chip}</span>" for chip in chips]
+    )
+
+    comment = data.get("comment", "")
+
     st.markdown("<div class='panel'>", unsafe_allow_html=True)
     st.markdown("<div class='section-title'>Live AB Card</div>", unsafe_allow_html=True)
 
     st.markdown(
         f"""
-        <div class="ab-card-filled">
-            <div class="ab-number">{p + 1}. {name} • AB {ab}</div>
-            <div class="ab-result">{result_dot(data.get("result",""))} {data.get("result") or "-"}</div>
-
-            <span class="chip">Pitch: {data.get("pitch","")} {data.get("velo","")}</span>
-            <span class="chip">Count: {data.get("count","")}</span>
-            <span class="chip">Zone: {data.get("zone","")}</span>
-            <span class="chip">Contact: {data.get("contact_type","")}</span>
-            <span class="chip">Direction: {data.get("direction","")}</span>
-            <span class="chip">Quality: {data.get("quality","")}</span>
-            <span class="chip">Situation: {data.get("situation","")}</span>
-
-            <hr>
-            <div class="muted">{data.get("comment","")}</div>
-        </div>
+<div class="ab-card-filled">
+    <div class="ab-number">{p + 1}. {name} • AB {ab}</div>
+    <div class="ab-result">{result_dot(data.get("result",""))} {data.get("result") or "-"}</div>
+    <div>{chips_html}</div>
+    <hr>
+    <div class="muted">{comment}</div>
+</div>
         """,
         unsafe_allow_html=True,
     )
