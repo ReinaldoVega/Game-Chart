@@ -366,15 +366,15 @@ def button_group(title, options, field, p, ab, cols_count=4):
                 if st.button(label, key=f"{field}_{p}_{ab}_{opt}", use_container_width=True):
                     st.session_state.chart_data[p][key][field] = opt
 
-                 if field == "result":
-                    st.session_state.chart_data[p][key], note = apply_result_rules(
-                    st.session_state.chart_data[p][key]
+                    if field == "result":
+                      st.session_state.chart_data[p][key], note = apply_result_rules(
+                         st.session_state.chart_data[p][key]
                     )
-                     if note:
+                    if note:
                       st.toast(note)
 
-                 autosave()
-                 st.rerun()
+            autosave()
+            st.rerun()
 
 
 def result_dot(result):
@@ -789,9 +789,13 @@ def quick_chart_panel():
 
     with right:
         strike_zone_visual(p, ab)
-        button_group("⚾ Contact", CONTACT_TYPE_OPTIONS, "contact_type", p, ab, 5)
-        field_direction_visual(p, ab)
-        button_group("🔥 Quality", CONTACT_QUALITY_OPTIONS, "quality", p, ab, 3)
+
+if contact_fields_should_show(data.get("result", "")):
+    button_group("⚾ Contact", CONTACT_TYPE_OPTIONS, "contact_type", p, ab, 5)
+    field_direction_visual(p, ab)
+    button_group("🔥 Quality", CONTACT_QUALITY_OPTIONS, "quality", p, ab, 3)
+else:
+    st.info("Contact, direction and quality are not needed for this result.")
 
     data["comment"] = st.text_area(
         "Comment",
