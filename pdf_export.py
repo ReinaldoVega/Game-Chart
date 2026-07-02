@@ -160,7 +160,7 @@ def draw_header(c, width, height, game_info):
 
     c.setFillColor(colors.white)
     c.setFont("Helvetica-Bold", 17)
-    c.drawString(74, height - 29, "TIGERS PROFESSIONAL AT-BAT SCOREBOOK")
+    c.drawString(74, height - 29, "TigerVision At-Bat Chart")
 
     c.setFont("Helvetica", 8)
     info = (

@@ -71,6 +71,7 @@ def save_current_game():
 
 
 def init_state():
+    st.session_state.setdefault("theme_mode", "Dark")
     st.session_state.setdefault("screen", "game_center")
     st.session_state.setdefault("active_abs", DEFAULT_ABS)
     st.session_state.setdefault("selected_player", 0)
@@ -109,140 +110,194 @@ def init_state():
 
 
 def css():
-    st.markdown(
-        """
-        <style>
-        .stApp {
-            background:
-                radial-gradient(circle at top left, rgba(250,70,22,.16), transparent 28%),
-                radial-gradient(circle at top right, rgba(12,35,64,.55), transparent 30%),
-                #07111F;
-            color: #F8FAFC;
-        }
+    theme = st.session_state.get("theme_mode", "Dark")
 
-        .main-header {
-            background: linear-gradient(135deg, rgba(12,35,64,.98), rgba(7,17,31,.96));
+    if theme == "Light":
+        bg = "#F5F7FA"
+        bg_radial_1 = "rgba(250,70,22,.10)"
+        bg_radial_2 = "rgba(12,35,64,.10)"
+        panel = "rgba(255,255,255,.94)"
+        card = "#FFFFFF"
+        card_2 = "#F8FAFC"
+        border = "rgba(12,35,64,.16)"
+        text = "#0F172A"
+        muted = "#475569"
+        button_bg = "linear-gradient(180deg, #FFFFFF, #F1F5F9)"
+        button_text = "#0C2340"
+        input_bg = "#FFFFFF"
+        input_text = "#0F172A"
+        header_bg = "linear-gradient(135deg, rgba(255,255,255,.96), rgba(241,245,249,.96))"
+        header_text = "#0C2340"
+        header_sub = "#475569"
+        shadow = "0 14px 30px rgba(15,23,42,.10)"
+        filled_bg = "linear-gradient(180deg, rgba(250,70,22,.12), rgba(255,255,255,.98))"
+    else:
+        bg = "#07111F"
+        bg_radial_1 = "rgba(250,70,22,.16)"
+        bg_radial_2 = "rgba(12,35,64,.55)"
+        panel = "rgba(11,27,46,.92)"
+        card = "#102A44"
+        card_2 = "#0B1B2E"
+        border = "rgba(148,163,184,.18)"
+        text = "#F8FAFC"
+        muted = "#94A3B8"
+        button_bg = "linear-gradient(180deg, #132F4F, #0B1B2E)"
+        button_text = "#F8FAFC"
+        input_bg = "#07111F"
+        input_text = "#F8FAFC"
+        header_bg = "linear-gradient(135deg, rgba(12,35,64,.98), rgba(7,17,31,.96))"
+        header_text = "#FFFFFF"
+        header_sub = "#CBD5E1"
+        shadow = "0 20px 40px rgba(0,0,0,.28)"
+        filled_bg = "linear-gradient(180deg, rgba(250,70,22,.16), rgba(16,42,68,.96))"
+
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background:
+                radial-gradient(circle at top left, {bg_radial_1}, transparent 28%),
+                radial-gradient(circle at top right, {bg_radial_2}, transparent 30%),
+                {bg};
+            color: {text};
+        }}
+
+        .main-header {{
+            background: {header_bg};
             padding: 22px 28px;
             border-radius: 26px;
-            border: 1px solid rgba(255,255,255,.08);
+            border: 1px solid {border};
             border-left: 8px solid #FA4616;
             margin-bottom: 18px;
-            box-shadow: 0 20px 40px rgba(0,0,0,.28);
-        }
+            box-shadow: {shadow};
+        }}
 
-        .main-header h1 {
-            color: white;
+        .main-header h1 {{
+            color: {header_text};
             margin: 0;
             font-size: 32px;
             letter-spacing: .5px;
-        }
+        }}
 
-        .main-header p {
-            color: #CBD5E1;
+        .main-header p {{
+            color: {header_sub};
             margin: 6px 0 0 0;
             font-size: 14px;
-        }
+        }}
 
-        .panel {
-            background: rgba(11,27,46,.92);
-            border: 1px solid rgba(148,163,184,.18);
+        .panel {{
+            background: {panel};
+            border: 1px solid {border};
             border-radius: 22px;
             padding: 18px;
             margin-bottom: 18px;
-            box-shadow: 0 16px 32px rgba(0,0,0,.22);
+            box-shadow: {shadow};
             backdrop-filter: blur(10px);
-        }
+        }}
 
-        .section-title {
-            color: #F8FAFC;
+        .section-title {{
+            color: {text};
             font-weight: 900;
             font-size: 19px;
             margin-bottom: 12px;
             letter-spacing: .3px;
-        }
+        }}
 
-        .muted {
-            color: #94A3B8;
+        .muted {{
+            color: {muted};
             font-size: 12px;
-        }
+        }}
 
-        .ab-card {
-            background: linear-gradient(180deg, #102A44, #0B1B2E);
-            border: 1px solid rgba(148,163,184,.22);
+        .chip {{
+            display: inline-block;
+            background: {card_2};
+            color: {text};
+            border: 1px solid {border};
+            border-radius: 999px;
+            padding: 4px 8px;
+            margin: 2px;
+            font-size: 11px;
+            font-weight: 800;
+        }}
+
+        .ab-card {{
+            background: linear-gradient(180deg, {card}, {card_2});
+            border: 1px solid {border};
             border-radius: 20px;
             padding: 14px;
             min-height: 138px;
             box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
-        }
+        }}
 
-        .ab-card-filled {
-            background:
-                linear-gradient(180deg, rgba(250,70,22,.16), rgba(16,42,68,.96));
+        .ab-card-filled {{
+            background: {filled_bg};
             border: 2px solid #FA4616;
             border-radius: 20px;
             padding: 14px;
             min-height: 138px;
             box-shadow: 0 0 22px rgba(250,70,22,.18);
-        }
+        }}
 
-        .ab-number {
-            color: #94A3B8;
+        .ab-number {{
+            color: {muted};
             font-size: 12px;
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: .6px;
-        }
+        }}
 
-        .ab-result {
-            color: white;
+        .ab-result {{
+            color: {text};
             font-size: 28px;
             font-weight: 1000;
             margin: 6px 0;
-        }
+        }}
 
-        div[data-testid="stButton"] button {
+        div[data-testid="stButton"] button {{
             border-radius: 14px;
             font-weight: 900;
-            border: 1px solid rgba(148,163,184,.22);
-            background: linear-gradient(180deg, #132F4F, #0B1B2E);
-            color: #F8FAFC;
+            border: 1px solid {border};
+            background: {button_bg};
+            color: {button_text};
             min-height: 42px;
             transition: all .15s ease-in-out;
-        }
+        }}
 
-        div[data-testid="stButton"] button:hover {
+        div[data-testid="stButton"] button:hover {{
             border-color: #FA4616;
-            color: white;
+            color: {button_text};
             transform: translateY(-1px);
             box-shadow: 0 8px 18px rgba(250,70,22,.18);
-        }
+        }}
 
         div[data-testid="stTextInput"] input,
-        div[data-testid="stTextArea"] textarea {
-            background-color: #07111F;
-            color: #F8FAFC;
-            border: 1px solid rgba(148,163,184,.22);
+        div[data-testid="stTextArea"] textarea {{
+            background-color: {input_bg};
+            color: {input_text};
+            border: 1px solid {border};
             border-radius: 14px;
-        }
+        }}
 
-        div[data-testid="stSelectbox"] div {
+        div[data-testid="stSelectbox"] div {{
             border-radius: 14px;
-        }
+            color: {input_text};
+        }}
 
-        div[data-testid="stTextArea"] textarea {
+        div[data-testid="stTextArea"] textarea {{
             min-height: 98px;
             font-size: 13px;
-        }
+        }}
 
-        .stExpander {
-            border: 1px solid rgba(148,163,184,.15) !important;
+        .stExpander {{
+            border: 1px solid {border} !important;
             border-radius: 18px !important;
             overflow: hidden;
-        }
+            background: {panel};
+        }}
 
-        hr {
-            border-color: rgba(148,163,184,.18);
-        }
+        hr {{
+            border-color: {border};
+        }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -315,6 +370,19 @@ def game_center():
                     st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
+
+def theme_toggle():
+    c1, c2, c3 = st.columns([6, 1, 1])
+
+    with c2:
+        if st.button("🌙 Dark", use_container_width=True):
+            st.session_state.theme_mode = "Dark"
+            st.rerun()
+
+    with c3:
+        if st.button("☀️ Light", use_container_width=True):
+            st.session_state.theme_mode = "Light"
+            st.rerun()
 
 def header():
     info = st.session_state.game_info
