@@ -18,52 +18,47 @@ def render_live_ab_card():
     next_step = get_next_step_label(data)
     progress = get_progress_text(data)
 
-    chips = [
-        f"Progress: {progress}",
-        f"Next: {next_step}",
-        f"Pitch: {data.get('pitch','')} {data.get('velo','')}",
-        f"Count: {data.get('count','')}",
-        f"Zone: {data.get('zone','')}",
-        f"Contact: {data.get('contact_type','')}",
-        f"Direction: {data.get('direction','')}",
-        f"Quality: {data.get('quality','')}",
-        f"Situation: {data.get('situation','')}",
-    ]
-
-    chips_html = "".join(
-        [f"<span class='chip'>{chip}</span>" for chip in chips if chip.strip()]
-    )
-
     result = data.get("result", "")
     comment = data.get("comment", "")
+
+    chips_html = "".join([
+        f"<span class='chip'>Progress: {progress}</span>",
+        f"<span class='chip'>Next: {next_step}</span>",
+        f"<span class='chip'>Pitch: {data.get('pitch','')} {data.get('velo','')}</span>",
+        f"<span class='chip'>Count: {data.get('count','')}</span>",
+        f"<span class='chip'>Zone: {data.get('zone','')}</span>",
+        f"<span class='chip'>Contact: {data.get('contact_type','')}</span>",
+        f"<span class='chip'>Direction: {data.get('direction','')}</span>",
+        f"<span class='chip'>Quality: {data.get('quality','')}</span>",
+        f"<span class='chip'>Situation: {data.get('situation','')}</span>",
+    ])
 
     panel_start()
     section_title("Live AB Card")
 
-    st.markdown(
-        f"""
-        <div class="ab-card">
-            <div class="muted" style="font-weight:900;">
-                {p + 1}. {name} • AB {ab}
-            </div>
-
-            <div style="font-size:34px;font-weight:1000;margin:8px 0;">
-                {result_dot(result)} {result or "-"}
-            </div>
-
-            <div>
-                {chips_html}
-            </div>
-
-            <hr>
-
-            <div class="muted">
-                {comment or "No comment yet."}
-            </div>
+    html = f"""
+    <div class="ab-card">
+        <div class="muted" style="font-weight:900;">
+            {p + 1}. {name} • AB {ab}
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+
+        <div style="font-size:34px;font-weight:1000;margin:8px 0;">
+            {result_dot(result)} {result or "-"}
+        </div>
+
+        <div>
+            {chips_html}
+        </div>
+
+        <hr>
+
+        <div class="muted">
+            {comment if comment else "No comment yet."}
+        </div>
+    </div>
+    """
+
+    st.markdown(html, unsafe_allow_html=True)
 
     if next_step == "Complete":
         st.success("✅ At-bat complete")
