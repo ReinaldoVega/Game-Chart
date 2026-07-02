@@ -11,7 +11,8 @@ from components.ui import (
 )
 from rules_engine import contact_fields_should_show
 from workflow_engine import get_next_step_label, get_progress_text
-
+from components.strike_zone import render_strike_zone
+from components.field import render_field_direction
 
 # =========================
 # LINEUP QUICK PANEL
