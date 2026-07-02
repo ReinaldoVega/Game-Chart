@@ -7,6 +7,8 @@ from config import *
 from database import save_game, get_game
 
 from styles.theme import inject_theme, theme_switch
+from components.topbar import render_topbar
+from components.intelligence_panel import render_intelligence_panel
 
 from components.game_center import render_game_center
 from components.header import render_header
@@ -146,27 +148,9 @@ def open_game(game_id):
         st.session_state.screen = "chart"
         st.rerun()
 
-
-def render_top_nav():
-    nav1, nav2, nav3 = st.columns([1, 1, 1])
-
-    with nav1:
-        if st.button("⬅️ Game Center", use_container_width=True):
-            st.session_state.screen = "game_center"
-            st.rerun()
-
-    with nav2:
-        if st.button("💾 Save Game", use_container_width=True):
-            save_current_game()
-
-    with nav3:
-        if st.button("➕ New Game", use_container_width=True):
-            new_game()
-
-
 def render_chart_screen():
     render_header()
-    render_top_nav()
+    render_topbar(save_current_game, new_game)
 
     render_game_info_panel()
 
@@ -196,6 +180,7 @@ def render_chart_screen():
     with right:
         render_live_ab_card()
         render_exports_panel()
+        render_intelligence_panel()
 
 
 init_state()
