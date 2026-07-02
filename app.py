@@ -694,6 +694,56 @@ def ab_cards():
 
     st.markdown("</div>", unsafe_allow_html=True)
 
+def strike_zone_visual(p, ab):
+    st.markdown("**Strike Zone**")
+    zones = [
+        ["1", "2", "3"],
+        ["4", "5", "6"],
+        ["7", "8", "9"],
+    ]
+
+    for row in zones:
+        cols = st.columns(3)
+        for col, zone in zip(cols, row):
+            with col:
+                button_group("", [zone], "zone", p, ab, 1)
+
+    st.markdown("**Chase Zone**")
+    c1, c2 = st.columns(2)
+
+    with c1:
+        button_group("", ["Chase Up", "Chase In"], "zone", p, ab, 1)
+
+    with c2:
+        button_group("", ["Chase Down", "Chase Away"], "zone", p, ab, 1)
+
+
+def field_direction_visual(p, ab):
+    st.markdown("**Field Direction**")
+
+    row1 = st.columns([1, 1, 1])
+    with row1[0]:
+        button_group("", ["LF"], "direction", p, ab, 1)
+    with row1[1]:
+        button_group("", ["CF"], "direction", p, ab, 1)
+    with row1[2]:
+        button_group("", ["RF"], "direction", p, ab, 1)
+
+    row2 = st.columns([1, 1, 1, 1])
+    with row2[0]:
+        button_group("", ["3B"], "direction", p, ab, 1)
+    with row2[1]:
+        button_group("", ["SS"], "direction", p, ab, 1)
+    with row2[2]:
+        button_group("", ["2B"], "direction", p, ab, 1)
+    with row2[3]:
+        button_group("", ["1B"], "direction", p, ab, 1)
+
+    row3 = st.columns([1, 1])
+    with row3[0]:
+        button_group("", ["P"], "direction", p, ab, 1)
+    with row3[1]:
+        button_group("", ["C"], "direction", p, ab, 1)
 
 def chart_editor():
     p = st.session_state.selected_player
@@ -738,13 +788,15 @@ def chart_editor():
         button_group("Count", COUNT_OPTIONS, "count", p, ab, 4)
 
     with c2:
-        button_group("Strike Zone", ["1", "2", "3", "4", "5", "6", "7", "8", "9"], "zone", p, ab, 3)
-        button_group("Chase Zone", ["Chase Up", "Chase Down", "Chase In", "Chase Away"], "zone", p, ab, 2)
-        button_group("Contact Type", CONTACT_TYPE_OPTIONS, "contact_type", p, ab, 5)
-        button_group("Direction", DIRECTION_OPTIONS, "direction", p, ab, 3)
-        button_group("Quality", CONTACT_QUALITY_OPTIONS, "quality", p, ab, 3)
+       strike_zone_visual(p, ab)
 
-    button_group("Situation", SITUATION_OPTIONS, "situation", p, ab, 4)
+       button_group("Contact Type", CONTACT_TYPE_OPTIONS, "contact_type", p, ab, 5)
+
+       field_direction_visual(p, ab)
+
+       button_group("Quality", CONTACT_QUALITY_OPTIONS, "quality", p, ab, 3)
+
+       button_group("Situation", SITUATION_OPTIONS, "situation", p, ab, 4)
 
     data["comment"] = st.text_area(
         "Comment",
