@@ -6,16 +6,19 @@ from datetime import date
 from config import *
 from csv_export import export_chart_csv
 from pdf_export import export_chart_pdf
-
 from database import load_games, save_game, delete_game, get_game
 
 
 st.set_page_config(
-    page_title="TigerVision Charting",
+    page_title="TigerVision",
     page_icon="🐅",
     layout="wide",
 )
 
+
+# =========================
+# STATE
+# =========================
 
 def blank_ab():
     return {
@@ -31,7 +34,64 @@ def blank_ab():
         "situation": "",
         "comment": "",
     }
-    
+
+
+def init_state():
+    st.session_state.setdefault("screen", "game_center")
+    st.session_state.setdefault("theme_mode", "Dark")
+    st.session_state.setdefault("active_abs", DEFAULT_ABS)
+    st.session_state.setdefault("selected_player", 0)
+    st.session_state.setdefault("selected_ab", 1)
+
+    if "game_info" not in st.session_state:
+        st.session_state.game_info = {
+            "date": str(date.today()),
+            "team": "DSL Tigers",
+            "opponent": "",
+            "home_away": "",
+            "game_number": "",
+            "inning": "",
+            "score": "",
+            "notes": "",
+        }
+
+    if "lineup" not in st.session_state:
+        st.session_state.lineup = [
+            {"name": "", "position": "", "bats": "", "subs": []}
+            for _ in range(MAX_PLAYERS)
+        ]
+
+    if "chart_data" not in st.session_state:
+        st.session_state.chart_data = {}
+
+    for p in range(MAX_PLAYERS):
+        st.session_state.chart_data.setdefault(p, {})
+        for ab in range(1, MAX_ABS + 1):
+            st.session_state.chart_data[p].setdefault(f"ab_{ab}", blank_ab())
+
+
+# =========================
+# SAVE / LOAD
+# =========================
+
+def save_current_game(show_message=True):
+    game_id = save_game(
+        st.session_state.game_info,
+        st.session_state.lineup,
+        st.session_state.chart_data,
+        st.session_state.active_abs,
+    )
+    st.session_state.game_info["game_id"] = game_id
+
+    if show_message:
+        st.success("Game saved.")
+
+
+def autosave():
+    if st.session_state.get("game_info", {}).get("game_id"):
+        save_current_game(show_message=False)
+
+
 def new_game():
     for key in ["game_info", "lineup", "chart_data"]:
         if key in st.session_state:
@@ -41,6 +101,7 @@ def new_game():
     st.session_state.selected_player = 0
     st.session_state.selected_ab = 1
     st.session_state.screen = "chart"
+
     init_state()
     st.rerun()
 
@@ -59,111 +120,53 @@ def open_game(game_id):
         st.rerun()
 
 
-def save_current_game():
-    game_id = save_game(
-        st.session_state.game_info,
-        st.session_state.lineup,
-        st.session_state.chart_data,
-        st.session_state.active_abs,
-    )
-    st.session_state.game_info["game_id"] = game_id
-    st.success("Game saved.")
-
-
-def init_state():
-    st.session_state.setdefault("theme_mode", "Dark")
-    st.session_state.setdefault("screen", "game_center")
-    st.session_state.setdefault("active_abs", DEFAULT_ABS)
-    st.session_state.setdefault("selected_player", 0)
-    st.session_state.setdefault("selected_ab", 1)
-
-    if "game_info" not in st.session_state:
-        st.session_state.game_info = {
-            "date": str(date.today()),
-            "team": "DSL Tigers",
-            "opponent": "",
-            "home_away": "",
-            "game_number": "",
-            "innings": "",
-            "score": "",
-            "notes": "",
-        }
-
-    if "lineup" not in st.session_state:
-        st.session_state.lineup = [
-            {
-                "name": "",
-                "position": "",
-                "bats": "",
-                "subs": [],
-            }
-            for _ in range(MAX_PLAYERS)
-        ]
-
-    if "chart_data" not in st.session_state:
-        st.session_state.chart_data = {}
-
-    for p in range(MAX_PLAYERS):
-        st.session_state.chart_data.setdefault(p, {})
-        for ab in range(1, MAX_ABS + 1):
-            st.session_state.chart_data[p].setdefault(f"ab_{ab}", blank_ab())
-
+# =========================
+# THEME
+# =========================
 
 def css():
     theme = st.session_state.get("theme_mode", "Dark")
 
     if theme == "Light":
         bg = "#F5F7FA"
-        bg_radial_1 = "rgba(250,70,22,.10)"
-        bg_radial_2 = "rgba(12,35,64,.10)"
-        panel = "rgba(255,255,255,.94)"
+        panel = "rgba(255,255,255,.96)"
         card = "#FFFFFF"
-        card_2 = "#F8FAFC"
+        card2 = "#F8FAFC"
         border = "rgba(12,35,64,.16)"
         text = "#0F172A"
         muted = "#475569"
-        button_bg = "linear-gradient(180deg, #FFFFFF, #F1F5F9)"
+        header = "linear-gradient(135deg, rgba(255,255,255,.98), rgba(241,245,249,.96))"
+        button = "linear-gradient(180deg,#FFFFFF,#F1F5F9)"
         button_text = "#0C2340"
         input_bg = "#FFFFFF"
-        input_text = "#0F172A"
-        header_bg = "linear-gradient(135deg, rgba(255,255,255,.96), rgba(241,245,249,.96))"
-        header_text = "#0C2340"
-        header_sub = "#475569"
         shadow = "0 14px 30px rgba(15,23,42,.10)"
-        filled_bg = "linear-gradient(180deg, rgba(250,70,22,.12), rgba(255,255,255,.98))"
     else:
         bg = "#07111F"
-        bg_radial_1 = "rgba(250,70,22,.16)"
-        bg_radial_2 = "rgba(12,35,64,.55)"
-        panel = "rgba(11,27,46,.92)"
+        panel = "rgba(11,27,46,.94)"
         card = "#102A44"
-        card_2 = "#0B1B2E"
+        card2 = "#0B1B2E"
         border = "rgba(148,163,184,.18)"
         text = "#F8FAFC"
         muted = "#94A3B8"
-        button_bg = "linear-gradient(180deg, #132F4F, #0B1B2E)"
+        header = "linear-gradient(135deg, rgba(12,35,64,.98), rgba(7,17,31,.96))"
+        button = "linear-gradient(180deg,#132F4F,#0B1B2E)"
         button_text = "#F8FAFC"
         input_bg = "#07111F"
-        input_text = "#F8FAFC"
-        header_bg = "linear-gradient(135deg, rgba(12,35,64,.98), rgba(7,17,31,.96))"
-        header_text = "#FFFFFF"
-        header_sub = "#CBD5E1"
         shadow = "0 20px 40px rgba(0,0,0,.28)"
-        filled_bg = "linear-gradient(180deg, rgba(250,70,22,.16), rgba(16,42,68,.96))"
 
     st.markdown(
         f"""
         <style>
         .stApp {{
             background:
-                radial-gradient(circle at top left, {bg_radial_1}, transparent 28%),
-                radial-gradient(circle at top right, {bg_radial_2}, transparent 30%),
+                radial-gradient(circle at top left, rgba(250,70,22,.14), transparent 28%),
+                radial-gradient(circle at top right, rgba(12,35,64,.25), transparent 30%),
                 {bg};
             color: {text};
         }}
 
         .main-header {{
-            background: {header_bg};
+            background: {header};
             padding: 22px 28px;
             border-radius: 26px;
             border: 1px solid {border};
@@ -173,14 +176,14 @@ def css():
         }}
 
         .main-header h1 {{
-            color: {header_text};
+            color: {text};
             margin: 0;
-            font-size: 32px;
+            font-size: 34px;
             letter-spacing: .5px;
         }}
 
         .main-header p {{
-            color: {header_sub};
+            color: {muted};
             margin: 6px 0 0 0;
             font-size: 14px;
         }}
@@ -192,7 +195,6 @@ def css():
             padding: 18px;
             margin-bottom: 18px;
             box-shadow: {shadow};
-            backdrop-filter: blur(10px);
         }}
 
         .section-title {{
@@ -200,7 +202,6 @@ def css():
             font-weight: 900;
             font-size: 19px;
             margin-bottom: 12px;
-            letter-spacing: .3px;
         }}
 
         .muted {{
@@ -209,99 +210,182 @@ def css():
         }}
 
         .chip {{
-            display: inline-block;
-            background: {card_2};
-            color: {text};
-            border: 1px solid {border};
-            border-radius: 999px;
-            padding: 4px 8px;
-            margin: 2px;
-            font-size: 11px;
-            font-weight: 800;
+            display:inline-block;
+            background:{card2};
+            color:{text};
+            border:1px solid {border};
+            border-radius:999px;
+            padding:5px 9px;
+            margin:2px;
+            font-size:11px;
+            font-weight:800;
         }}
 
         .ab-card {{
-            background: linear-gradient(180deg, {card}, {card_2});
+            background: linear-gradient(180deg,{card},{card2});
             border: 1px solid {border};
             border-radius: 20px;
             padding: 14px;
-            min-height: 138px;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+            min-height: 130px;
         }}
 
         .ab-card-filled {{
-            background: {filled_bg};
+            background: linear-gradient(180deg,rgba(250,70,22,.16),{card});
             border: 2px solid #FA4616;
             border-radius: 20px;
             padding: 14px;
-            min-height: 138px;
-            box-shadow: 0 0 22px rgba(250,70,22,.18);
+            min-height: 130px;
+            box-shadow:0 0 22px rgba(250,70,22,.18);
         }}
 
         .ab-number {{
-            color: {muted};
-            font-size: 12px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: .6px;
+            color:{muted};
+            font-size:12px;
+            font-weight:900;
+            letter-spacing:.6px;
         }}
 
         .ab-result {{
-            color: {text};
-            font-size: 28px;
-            font-weight: 1000;
-            margin: 6px 0;
+            color:{text};
+            font-size:28px;
+            font-weight:1000;
+            margin:6px 0;
         }}
 
         div[data-testid="stButton"] button {{
-            border-radius: 14px;
-            font-weight: 900;
-            border: 1px solid {border};
-            background: {button_bg};
-            color: {button_text};
-            min-height: 42px;
-            transition: all .15s ease-in-out;
+            border-radius:14px;
+            font-weight:900;
+            border:1px solid {border};
+            background:{button};
+            color:{button_text};
+            min-height:42px;
         }}
 
         div[data-testid="stButton"] button:hover {{
-            border-color: #FA4616;
-            color: {button_text};
-            transform: translateY(-1px);
-            box-shadow: 0 8px 18px rgba(250,70,22,.18);
+            border-color:#FA4616;
+            transform:translateY(-1px);
+            box-shadow:0 8px 18px rgba(250,70,22,.18);
         }}
 
         div[data-testid="stTextInput"] input,
         div[data-testid="stTextArea"] textarea {{
-            background-color: {input_bg};
-            color: {input_text};
-            border: 1px solid {border};
-            border-radius: 14px;
-        }}
-
-        div[data-testid="stSelectbox"] div {{
-            border-radius: 14px;
-            color: {input_text};
+            background:{input_bg};
+            color:{text};
+            border:1px solid {border};
+            border-radius:14px;
         }}
 
         div[data-testid="stTextArea"] textarea {{
-            min-height: 98px;
-            font-size: 13px;
+            min-height:95px;
+            font-size:13px;
         }}
 
         .stExpander {{
-            border: 1px solid {border} !important;
-            border-radius: 18px !important;
-            overflow: hidden;
-            background: {panel};
+            border:1px solid {border} !important;
+            border-radius:18px !important;
+            overflow:hidden;
+            background:{panel};
         }}
 
         hr {{
-            border-color: {border};
+            border-color:{border};
         }}
         </style>
         """,
         unsafe_allow_html=True,
     )
+
+
+def theme_toggle():
+    c1, c2, c3 = st.columns([6, 1, 1])
+
+    with c2:
+        if st.button("🌙 Dark", use_container_width=True):
+            st.session_state.theme_mode = "Dark"
+            st.rerun()
+
+    with c3:
+        if st.button("☀️ Light", use_container_width=True):
+            st.session_state.theme_mode = "Light"
+            st.rerun()
+
+
+# =========================
+# UI HELPERS
+# =========================
+
+def styled_label(field, opt, selected=False):
+    prefix = ""
+
+    if field == "result":
+        if opt in ["1B", "2B", "3B"]:
+            prefix = "🟢"
+        elif opt == "HR":
+            prefix = "🟠"
+        elif opt in ["BB", "HBP"]:
+            prefix = "🔵"
+        elif "K" in opt:
+            prefix = "🔴"
+        else:
+            prefix = "⚫"
+    elif field == "pitch":
+        prefix = "🟣"
+    elif field == "zone":
+        prefix = "🟧"
+    elif field == "quality":
+        prefix = "🟢" if opt in ["Barrel", "Hard Hit"] else "🟡" if opt == "Solid" else "🔴"
+    elif field == "direction":
+        prefix = "➡️"
+    elif field == "contact_type":
+        prefix = "⚾"
+    elif field == "count":
+        prefix = "🔢"
+    elif field == "situation":
+        prefix = "📌"
+
+    label = f"{prefix} {opt}".strip()
+    return f"✅ {label}" if selected else label
+
+
+def button_group(title, options, field, p, ab, cols_count=4):
+    if title:
+        st.markdown(f"**{title}**")
+
+    key = f"ab_{ab}"
+    current = st.session_state.chart_data[p][key].get(field, "")
+
+    for start in range(0, len(options), cols_count):
+        row = options[start:start + cols_count]
+        cols = st.columns(len(row))
+
+        for col, opt in zip(cols, row):
+            selected = current == opt
+            label = styled_label(field, opt, selected)
+
+            with col:
+                if st.button(label, key=f"{field}_{p}_{ab}_{opt}", use_container_width=True):
+                    st.session_state.chart_data[p][key][field] = opt
+                    autosave()
+                    st.rerun()
+
+
+def result_dot(result):
+    if result in ["1B", "2B", "3B"]:
+        return "🟢"
+    if result == "HR":
+        return "🟠"
+    if result in ["BB", "HBP"]:
+        return "🔵"
+    if "K" in result:
+        return "🔴"
+    if result:
+        return "⚫"
+    return "⚪"
+
+
+# =========================
+# GAME CENTER
+# =========================
 
 def game_center():
     st.markdown(
@@ -330,11 +414,7 @@ def game_center():
     if not games:
         st.info("No saved games yet.")
     else:
-        sorted_games = sorted(
-            games.values(),
-            key=lambda g: g.get("saved_at", ""),
-            reverse=True,
-        )
+        sorted_games = sorted(games.values(), key=lambda g: g.get("saved_at", ""), reverse=True)
 
         for game in sorted_games:
             game_id = game["game_id"]
@@ -353,7 +433,7 @@ def game_center():
                     f"""
                     <div class="ab-card">
                         <div class="ab-number">{date_txt} • Game {game_number}</div>
-                        <div class="ab-result" style="font-size:20px;">{team} vs {opponent}</div>
+                        <div class="ab-result" style="font-size:22px;">{team} vs {opponent}</div>
                         <div class="muted">Last saved: {saved_at}</div>
                     </div>
                     """,
@@ -371,25 +451,17 @@ def game_center():
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-def theme_toggle():
-    c1, c2, c3 = st.columns([6, 1, 1])
 
-    with c2:
-        if st.button("🌙 Dark", use_container_width=True):
-            st.session_state.theme_mode = "Dark"
-            st.rerun()
-
-    with c3:
-        if st.button("☀️ Light", use_container_width=True):
-            st.session_state.theme_mode = "Light"
-            st.rerun()
+# =========================
+# HEADER
+# =========================
 
 def header():
     info = st.session_state.game_info
 
-    date_txt = info.get("date", "")
     team = info.get("team", "DSL Tigers") or "DSL Tigers"
     opponent = info.get("opponent", "") or "Opponent"
+    date_txt = info.get("date", "")
     home_away = info.get("home_away", "") or "-"
     game_number = info.get("game_number", "") or "-"
     inning = info.get("inning", "") or "-"
@@ -406,7 +478,7 @@ def header():
                 PROFESSIONAL GAME CHARTING
             </div>
             <h1>🐅 TigerVision</h1>
-            <p>Player Development Charting System</p>
+            <p>Quick Chart Mode</p>
             """,
             unsafe_allow_html=True,
         )
@@ -415,7 +487,7 @@ def header():
         st.markdown(
             f"""
             <div style="text-align:right;">
-                <div style="font-size:18px;font-weight:900;color:white;">
+                <div style="font-size:19px;font-weight:900;">
                     {team} vs {opponent}
                 </div>
                 <div style="margin-top:8px;">
@@ -433,63 +505,46 @@ def header():
     st.markdown("</div>", unsafe_allow_html=True)
 
 
+# =========================
+# GAME INFO / LINEUP
+# =========================
+
 def game_info_panel():
     with st.expander("Game Info", expanded=False):
         c1, c2, c3, c4, c5, c6, c7 = st.columns([1, 1.1, 1.3, .8, .8, .8, .8])
 
         with c1:
-            game_date = st.date_input(
-                "Date",
-                value=date.fromisoformat(st.session_state.game_info["date"]),
-            )
-            st.session_state.game_info["date"] = str(game_date)
+            d = st.date_input("Date", value=date.fromisoformat(st.session_state.game_info["date"]))
+            st.session_state.game_info["date"] = str(d)
 
         with c2:
-            st.session_state.game_info["team"] = st.text_input(
-                "Team",
-                value=st.session_state.game_info["team"],
-            )
+            st.session_state.game_info["team"] = st.text_input("Team", st.session_state.game_info["team"])
 
         with c3:
-            st.session_state.game_info["opponent"] = st.text_input(
-                "Opponent",
-                value=st.session_state.game_info["opponent"],
-            )
+            st.session_state.game_info["opponent"] = st.text_input("Opponent", st.session_state.game_info["opponent"])
 
         with c4:
+            opts = ["", "Home", "Away"]
             st.session_state.game_info["home_away"] = st.selectbox(
                 "H/A",
-                ["", "Home", "Away"],
-                index=["", "Home", "Away"].index(st.session_state.game_info.get("home_away", "")),
+                opts,
+                index=opts.index(st.session_state.game_info.get("home_away", "")),
             )
 
         with c5:
-            st.session_state.game_info["game_number"] = st.text_input(
-                "Game #",
-                value=st.session_state.game_info["game_number"],
-            )
+            st.session_state.game_info["game_number"] = st.text_input("Game #", st.session_state.game_info["game_number"])
 
         with c6:
-            st.session_state.game_info["inning"] = st.text_input(
-                "Inning",
-                value=st.session_state.game_info.get("inning", ""),
-            )
+            st.session_state.game_info["inning"] = st.text_input("Inning", st.session_state.game_info.get("inning", ""))
 
         with c7:
-            st.session_state.game_info["score"] = st.text_input(
-                "Score",
-                value=st.session_state.game_info.get("score", ""),
-            )
+            st.session_state.game_info["score"] = st.text_input("Score", st.session_state.game_info.get("score", ""))
 
-        st.session_state.game_info["notes"] = st.text_area(
-            "General Notes",
-            value=st.session_state.game_info["notes"],
-            placeholder="General notes...",
-        )
+        st.session_state.game_info["notes"] = st.text_area("General Notes", st.session_state.game_info["notes"])
 
 
 def lineup_panel():
-    with st.expander("Lineup / PH / Subs", expanded=True):
+    with st.expander("Lineup / PH / Subs", expanded=False):
         for i in range(MAX_PLAYERS):
             st.markdown(f"#### Spot {i + 1}")
 
@@ -521,54 +576,36 @@ def lineup_panel():
                     key=f"bats_{i}",
                 )
 
-            c_add, c_space = st.columns([1, 4])
-            with c_add:
-                if st.button("+ PH/Sub", key=f"add_sub_{i}", use_container_width=True):
-                    st.session_state.lineup[i]["subs"].append(
-                        {
-                            "name": "",
-                            "role": "PH",
-                            "inning": "",
-                            "position": "",
-                        }
-                    )
-                    st.rerun()
+            if st.button("+ PH/Sub", key=f"add_sub_{i}", use_container_width=True):
+                st.session_state.lineup[i]["subs"].append(
+                    {"name": "", "role": "PH", "inning": "", "position": ""}
+                )
+                st.rerun()
 
             for s_idx, sub in enumerate(st.session_state.lineup[i]["subs"]):
                 sc1, sc2, sc3, sc4, sc5 = st.columns([2, .9, .8, .9, .6])
 
                 with sc1:
-                    sub["name"] = st.text_input(
-                        "Name",
-                        value=sub.get("name", ""),
-                        key=f"sub_name_{i}_{s_idx}",
-                        placeholder="Sub name",
-                    )
+                    sub["name"] = st.text_input("Name", value=sub.get("name", ""), key=f"sub_name_{i}_{s_idx}")
 
                 with sc2:
                     sub["role"] = st.selectbox(
                         "Role",
                         PLAYER_ROLE_OPTIONS,
                         index=PLAYER_ROLE_OPTIONS.index(sub.get("role", "PH"))
-                        if sub.get("role", "PH") in PLAYER_ROLE_OPTIONS
-                        else 0,
+                        if sub.get("role", "PH") in PLAYER_ROLE_OPTIONS else 0,
                         key=f"sub_role_{i}_{s_idx}",
                     )
 
                 with sc3:
-                    sub["inning"] = st.text_input(
-                        "Inn",
-                        value=sub.get("inning", ""),
-                        key=f"sub_inn_{i}_{s_idx}",
-                    )
+                    sub["inning"] = st.text_input("Inn", value=sub.get("inning", ""), key=f"sub_inn_{i}_{s_idx}")
 
                 with sc4:
                     sub["position"] = st.selectbox(
                         "POS",
                         POSITION_OPTIONS,
                         index=POSITION_OPTIONS.index(sub.get("position", ""))
-                        if sub.get("position", "") in POSITION_OPTIONS
-                        else 0,
+                        if sub.get("position", "") in POSITION_OPTIONS else 0,
                         key=f"sub_pos_{i}_{s_idx}",
                     )
 
@@ -580,7 +617,11 @@ def lineup_panel():
             st.divider()
 
 
-def player_picker():
+# =========================
+# QUICK CHART
+# =========================
+
+def lineup_quick_panel():
     st.markdown("<div class='panel'>", unsafe_allow_html=True)
     st.markdown("<div class='section-title'>Lineup</div>", unsafe_allow_html=True)
 
@@ -588,6 +629,11 @@ def player_picker():
         name = player.get("name", "").strip() or f"Player {i + 1}"
         pos = player.get("position", "")
         bats = player.get("bats", "")
+
+        dots = ""
+        for ab in range(1, st.session_state.active_abs + 1):
+            r = st.session_state.chart_data[i][f"ab_{ab}"].get("result", "")
+            dots += result_dot(r)
 
         label = f"{i + 1}. {name}"
         if pos:
@@ -599,18 +645,19 @@ def player_picker():
             st.session_state.selected_player = i
             st.rerun()
 
+        st.markdown(f"<div class='muted'>{dots}</div>", unsafe_allow_html=True)
+
         for sub in player.get("subs", []):
             if sub.get("name"):
                 st.markdown(
-                    f"<div class='muted'>↳ {sub.get('role')} {sub.get('name')} "
-                    f"{sub.get('position', '')} Inn: {sub.get('inning', '')}</div>",
+                    f"<div class='muted'>↳ {sub.get('role')} {sub.get('name')} {sub.get('position','')} Inn {sub.get('inning','')}</div>",
                     unsafe_allow_html=True,
                 )
 
     st.markdown("</div>", unsafe_allow_html=True)
 
 
-def ab_picker():
+def ab_timeline():
     st.markdown("<div class='panel'>", unsafe_allow_html=True)
     st.markdown("<div class='section-title'>At-Bats</div>", unsafe_allow_html=True)
 
@@ -620,21 +667,23 @@ def ab_picker():
         if st.button("+ Add AB", use_container_width=True):
             if st.session_state.active_abs < MAX_ABS:
                 st.session_state.active_abs += 1
+                autosave()
                 st.rerun()
 
     with c2:
         if st.button("- Remove AB", use_container_width=True):
             if st.session_state.active_abs > DEFAULT_ABS:
                 st.session_state.active_abs -= 1
-                if st.session_state.selected_ab > st.session_state.active_abs:
-                    st.session_state.selected_ab = st.session_state.active_abs
+                autosave()
                 st.rerun()
 
+    p = st.session_state.selected_player
+
     for ab in range(1, st.session_state.active_abs + 1):
-        data = st.session_state.chart_data[st.session_state.selected_player][f"ab_{ab}"]
-        label = f"AB {ab}"
+        data = st.session_state.chart_data[p][f"ab_{ab}"]
+        label = f"AB {ab} {result_dot(data.get('result',''))}"
         if data.get("result"):
-            label += f" | {data.get('result')}"
+            label += f" {data.get('result')}"
 
         if st.button(label, key=f"pick_ab_{ab}", use_container_width=True):
             st.session_state.selected_ab = ab
@@ -643,64 +692,10 @@ def ab_picker():
     st.markdown("</div>", unsafe_allow_html=True)
 
 
-def button_group(title, options, field, p, ab, cols_count=4):
-    st.markdown(f"**{title}**")
-    key = f"ab_{ab}"
-    current = st.session_state.chart_data[p][key].get(field, "")
-
-    for start in range(0, len(options), cols_count):
-        row = options[start:start + cols_count]
-        cols = st.columns(len(row))
-
-        for col, opt in zip(cols, row):
-            selected = current == opt
-            label = f"✅ {opt}" if selected else opt
-
-            if col.button(label, key=f"{field}_{p}_{ab}_{opt}", use_container_width=True):
-                st.session_state.chart_data[p][key][field] = opt
-                st.rerun()
-
-
-def ab_cards():
-    p = st.session_state.selected_player
-    player = st.session_state.lineup[p]
-    name = player.get("name", "").strip() or f"Player {p + 1}"
-
-    st.markdown("<div class='panel'>", unsafe_allow_html=True)
-    st.markdown(f"<div class='section-title'>{p + 1}. {name} — AB Summary</div>", unsafe_allow_html=True)
-
-    cols = st.columns(st.session_state.active_abs)
-
-    for ab in range(1, st.session_state.active_abs + 1):
-        data = st.session_state.chart_data[p][f"ab_{ab}"]
-        filled = any(data.get(k) for k in data if k != "batter")
-        card_class = "ab-card-filled" if filled else "ab-card"
-
-        with cols[ab - 1]:
-            st.markdown(
-                f"""
-                <div class="{card_class}">
-                    <div class="ab-number">AB {ab}</div>
-                    <div class="ab-result">{data.get("result") or "-"}</div>
-                    <div class="muted">Batter: {data.get("batter", "Starter")}</div>
-                    <div class="muted">Pitch: {data.get("pitch", "")} {data.get("velo", "")}</div>
-                    <div class="muted">Count: {data.get("count", "")}</div>
-                    <div class="muted">Zone: {data.get("zone", "")}</div>
-                    <div class="muted">Contact: {data.get("contact_type", "")} {data.get("direction", "")}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
 def strike_zone_visual(p, ab):
-    st.markdown("**Strike Zone**")
-    zones = [
-        ["1", "2", "3"],
-        ["4", "5", "6"],
-        ["7", "8", "9"],
-    ]
+    st.markdown("**🎯 Strike Zone**")
+
+    zones = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"]]
 
     for row in zones:
         cols = st.columns(3)
@@ -708,7 +703,7 @@ def strike_zone_visual(p, ab):
             with col:
                 button_group("", [zone], "zone", p, ab, 1)
 
-    st.markdown("**Chase Zone**")
+    st.markdown("**Chase**")
     c1, c2 = st.columns(2)
 
     with c1:
@@ -719,9 +714,9 @@ def strike_zone_visual(p, ab):
 
 
 def field_direction_visual(p, ab):
-    st.markdown("**Field Direction**")
+    st.markdown("**🧤 Field Direction**")
 
-    row1 = st.columns([1, 1, 1])
+    row1 = st.columns(3)
     with row1[0]:
         button_group("", ["LF"], "direction", p, ab, 1)
     with row1[1]:
@@ -729,7 +724,7 @@ def field_direction_visual(p, ab):
     with row1[2]:
         button_group("", ["RF"], "direction", p, ab, 1)
 
-    row2 = st.columns([1, 1, 1, 1])
+    row2 = st.columns(4)
     with row2[0]:
         button_group("", ["3B"], "direction", p, ab, 1)
     with row2[1]:
@@ -739,27 +734,24 @@ def field_direction_visual(p, ab):
     with row2[3]:
         button_group("", ["1B"], "direction", p, ab, 1)
 
-    row3 = st.columns([1, 1])
+    row3 = st.columns(2)
     with row3[0]:
         button_group("", ["P"], "direction", p, ab, 1)
     with row3[1]:
         button_group("", ["C"], "direction", p, ab, 1)
 
-def chart_editor():
+
+def quick_chart_panel():
     p = st.session_state.selected_player
     ab = st.session_state.selected_ab
-    key = f"ab_{ab}"
-    data = st.session_state.chart_data[p][key]
-    player = st.session_state.lineup[p]
+    data = st.session_state.chart_data[p][f"ab_{ab}"]
 
-    starter_name = player.get("name", "").strip() or f"Player {p + 1}"
+    player = st.session_state.lineup[p]
+    name = player.get("name", "").strip() or f"Player {p + 1}"
     subs = [s for s in player.get("subs", []) if s.get("name")]
 
     st.markdown("<div class='panel'>", unsafe_allow_html=True)
-    st.markdown(
-        f"<div class='section-title'>Chart Editor — {starter_name} | AB {ab}</div>",
-        unsafe_allow_html=True,
-    )
+    st.markdown(f"<div class='section-title'>Quick Chart — {p + 1}. {name} | AB {ab}</div>", unsafe_allow_html=True)
 
     batter_options = ["Starter"] + [f"{s.get('role')} - {s.get('name')}" for s in subs]
 
@@ -767,36 +759,31 @@ def chart_editor():
         "Who took this AB?",
         batter_options,
         index=batter_options.index(data.get("batter", "Starter"))
-        if data.get("batter", "Starter") in batter_options
-        else 0,
+        if data.get("batter", "Starter") in batter_options else 0,
         key=f"batter_{p}_{ab}",
     )
 
-    c1, c2 = st.columns([1, 1])
+    left, right = st.columns([1.1, 1])
 
-    with c1:
-        button_group("Result", RESULT_OPTIONS, "result", p, ab, 4)
-        button_group("Pitch Type", PITCH_OPTIONS, "pitch", p, ab, 4)
+    with left:
+        button_group("🟢 Result", RESULT_OPTIONS, "result", p, ab, 4)
+        button_group("🟣 Pitch", PITCH_OPTIONS, "pitch", p, ab, 4)
 
         data["velo"] = st.text_input(
             "Pitch Velo",
             value=data.get("velo", ""),
             key=f"velo_{p}_{ab}",
-            placeholder="Example: 94.5",
+            placeholder="94.5",
         )
 
-        button_group("Count", COUNT_OPTIONS, "count", p, ab, 4)
+        button_group("🔢 Count", COUNT_OPTIONS, "count", p, ab, 4)
+        button_group("📌 Situation", SITUATION_OPTIONS, "situation", p, ab, 4)
 
-    with c2:
-       strike_zone_visual(p, ab)
-
-       button_group("Contact Type", CONTACT_TYPE_OPTIONS, "contact_type", p, ab, 5)
-
-       field_direction_visual(p, ab)
-
-       button_group("Quality", CONTACT_QUALITY_OPTIONS, "quality", p, ab, 3)
-
-       button_group("Situation", SITUATION_OPTIONS, "situation", p, ab, 4)
+    with right:
+        strike_zone_visual(p, ab)
+        button_group("⚾ Contact", CONTACT_TYPE_OPTIONS, "contact_type", p, ab, 5)
+        field_direction_visual(p, ab)
+        button_group("🔥 Quality", CONTACT_QUALITY_OPTIONS, "quality", p, ab, 3)
 
     data["comment"] = st.text_area(
         "Comment",
@@ -805,21 +792,60 @@ def chart_editor():
         placeholder="Example: Hard LD to CF off FB middle-middle. Good swing decision.",
     )
 
-    c_clear, c_next = st.columns(2)
+    c1, c2 = st.columns(2)
 
-    with c_clear:
+    with c1:
         if st.button("Clear This AB", use_container_width=True):
-            st.session_state.chart_data[p][key] = blank_ab()
+            st.session_state.chart_data[p][f"ab_{ab}"] = blank_ab()
+            autosave()
             st.rerun()
 
-    with c_next:
+    with c2:
         if st.button("Save & Next AB", use_container_width=True):
+            autosave()
+
             if st.session_state.selected_ab < st.session_state.active_abs:
                 st.session_state.selected_ab += 1
             elif st.session_state.active_abs < MAX_ABS:
                 st.session_state.active_abs += 1
                 st.session_state.selected_ab += 1
+
             st.rerun()
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+def live_ab_card():
+    p = st.session_state.selected_player
+    ab = st.session_state.selected_ab
+    data = st.session_state.chart_data[p][f"ab_{ab}"]
+
+    player = st.session_state.lineup[p]
+    name = player.get("name", "").strip() or f"Player {p + 1}"
+
+    st.markdown("<div class='panel'>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>Live AB Card</div>", unsafe_allow_html=True)
+
+    st.markdown(
+        f"""
+        <div class="ab-card-filled">
+            <div class="ab-number">{p + 1}. {name} • AB {ab}</div>
+            <div class="ab-result">{result_dot(data.get("result",""))} {data.get("result") or "-"}</div>
+
+            <span class="chip">Pitch: {data.get("pitch","")} {data.get("velo","")}</span>
+            <span class="chip">Count: {data.get("count","")}</span>
+            <span class="chip">Zone: {data.get("zone","")}</span>
+            <span class="chip">Contact: {data.get("contact_type","")}</span>
+            <span class="chip">Direction: {data.get("direction","")}</span>
+            <span class="chip">Quality: {data.get("quality","")}</span>
+            <span class="chip">Situation: {data.get("situation","")}</span>
+
+            <hr>
+            <div class="muted">{data.get("comment","")}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -838,7 +864,7 @@ def exports_panel():
                 st.session_state.lineup,
                 st.session_state.chart_data,
             ),
-            file_name="tiger_vision-chart.csv",
+            file_name="tigervision_chart.csv",
             mime="text/csv",
             use_container_width=True,
         )
@@ -851,13 +877,17 @@ def exports_panel():
                 st.session_state.lineup,
                 st.session_state.chart_data,
             ),
-            file_name="tiger_vision-chart.pdf",
+            file_name="tigervision_scorebook.pdf",
             mime="application/pdf",
             use_container_width=True,
         )
 
     st.markdown("</div>", unsafe_allow_html=True)
 
+
+# =========================
+# MAIN
+# =========================
 
 init_state()
 css()
@@ -868,32 +898,33 @@ if st.session_state.screen == "game_center":
 else:
     header()
 
-    top1, top2, top3 = st.columns([1, 1, 1])
+    nav1, nav2, nav3 = st.columns([1, 1, 1])
 
-    with top1:
+    with nav1:
         if st.button("⬅️ Game Center", use_container_width=True):
             st.session_state.screen = "game_center"
             st.rerun()
 
-    with top2:
+    with nav2:
         if st.button("💾 Save Game", use_container_width=True):
             save_current_game()
 
-    with top3:
+    with nav3:
         if st.button("➕ New Game", use_container_width=True):
             new_game()
 
     game_info_panel()
     lineup_panel()
 
-    left, right = st.columns([1.1, 2.9])
+    left, middle, right = st.columns([1.05, 2.25, 1.25])
 
     with left:
-        player_picker()
-        ab_picker()
+        lineup_quick_panel()
+        ab_timeline()
+
+    with middle:
+        quick_chart_panel()
 
     with right:
-        ab_cards()
-        chart_editor()
-
-    exports_panel()
+        live_ab_card()
+        exports_panel()
