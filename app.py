@@ -95,16 +95,35 @@ def autosave():
 
 
 def new_game():
-    for key in ["game_info", "lineup", "chart_data"]:
-        if key in st.session_state:
-            del st.session_state[key]
+    st.session_state.screen = "chart"
+
+    st.session_state.game_info = {
+        "date": str(date.today()),
+        "team": "DSL Tigers",
+        "opponent": "",
+        "home_away": "",
+        "game_number": "",
+        "inning": "",
+        "score": "",
+        "notes": "",
+    }
+
+    st.session_state.lineup = [
+        {"name": "", "position": "", "bats": "", "subs": []}
+        for _ in range(MAX_PLAYERS)
+    ]
+
+    st.session_state.chart_data = {}
+
+    for p in range(MAX_PLAYERS):
+        st.session_state.chart_data[p] = {}
+        for ab in range(1, MAX_ABS + 1):
+            st.session_state.chart_data[p][f"ab_{ab}"] = blank_ab()
 
     st.session_state.active_abs = DEFAULT_ABS
     st.session_state.selected_player = 0
     st.session_state.selected_ab = 1
-    st.session_state.screen = "chart"
 
-    init_state()
     st.rerun()
 
 
