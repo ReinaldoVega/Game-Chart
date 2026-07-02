@@ -384,18 +384,22 @@ def button_group(title, options, field, p, ab, cols_count=4):
             label = styled_label(field, opt, selected)
 
             with col:
-                if st.button(label, key=f"{field}_{p}_{ab}_{opt}", use_container_width=True):
+                if st.button(
+                    label,
+                    key=f"{field}_{p}_{ab}_{opt}",
+                    use_container_width=True,
+                ):
                     st.session_state.chart_data[p][key][field] = opt
 
                     if field == "result":
-                      st.session_state.chart_data[p][key], note = apply_result_rules(
-                         st.session_state.chart_data[p][key]
-                    )
-                    if note:
-                      st.toast(note)
+                        st.session_state.chart_data[p][key], note = apply_result_rules(
+                            st.session_state.chart_data[p][key]
+                        )
+                        if note:
+                            st.toast(note)
 
-            autosave()
-            st.rerun()
+                    autosave()
+                    st.rerun()
 
 
 def result_dot(result):
@@ -919,8 +923,8 @@ def exports_panel():
 # =========================
 
 init_state()
-#css()
-#theme_toggle()
+css()
+theme_toggle()
 
 if st.session_state.screen == "game_center":
     game_center()
