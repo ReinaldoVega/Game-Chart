@@ -709,25 +709,60 @@ def ab_timeline():
     st.markdown("</div>", unsafe_allow_html=True)
 
 
+def strike_zone_button(label, value, p, ab):
+    key = f"ab_{ab}"
+    current = st.session_state.chart_data[p][key].get("zone", "")
+
+    selected = current == value
+    display = f"🟧 {label}" if selected else label
+
+    if st.button(
+        display,
+        key=f"strike_zone_{p}_{ab}_{value}",
+        use_container_width=True,
+    ):
+        st.session_state.chart_data[p][key]["zone"] = value
+        autosave()
+        st.rerun()
+
+
 def strike_zone_visual(p, ab):
-    st.markdown("**🎯 Strike Zone**")
+    st.markdown("### 🎯 Strike Zone")
 
-    zones = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"]]
+    st.caption("Tap the pitch location")
 
-    for row in zones:
+    chase_up = st.columns([1, 2, 1])
+    with chase_up[1]:
+        strike_zone_button("⬆️ Chase Up", "Chase Up", p, ab)
+
+    zone_rows = [
+        [("1", "1"), ("2", "2"), ("3", "3")],
+        [("4", "4"), ("5", "5"), ("6", "6")],
+        [("7", "7"), ("8", "8"), ("9", "9")],
+    ]
+
+    for row in zone_rows:
         cols = st.columns(3)
-        for col, zone in zip(cols, row):
+        for col, (label, value) in zip(cols, row):
             with col:
-                button_group("", [zone], "zone", p, ab, 1)
+                strike_zone_button(label, value, p, ab)
 
-    st.markdown("**Chase**")
-    c1, c2 = st.columns(2)
+    chase_sides = st.columns(2)
 
-    with c1:
-        button_group("", ["Chase Up", "Chase In"], "zone", p, ab, 1)
+    with chase_sides[0]:
+        strike_zone_button("⬅️ Chase In", "Chase In", p, ab)
 
-    with c2:
-        button_group("", ["Chase Down", "Chase Away"], "zone", p, ab, 1)
+    with chase_sides[1]:
+        strike_zone_button("➡️ Chase Away", "Chase Away", p, ab)
+
+    chase_down = st.columns([1, 2, 1])
+    with chase_down[1]:
+        strike_zone_button("⬇️ Chase Down", "Chase Down", p, ab)
+
+    if st.button("Clear Zone", key=f"clear_zone_{p}_{ab}", use_container_width=True):
+        st.session_state.chart_data[p][f"ab_{ab}"]["zone"] = ""
+        autosave()
+        st.rerun()
 
 
 def field_direction_visual(p, ab):
