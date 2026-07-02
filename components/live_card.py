@@ -21,44 +21,31 @@ def render_live_ab_card():
     result = data.get("result", "")
     comment = data.get("comment", "")
 
-    chips_html = "".join([
-        f"<span class='chip'>Progress: {progress}</span>",
-        f"<span class='chip'>Next: {next_step}</span>",
-        f"<span class='chip'>Pitch: {data.get('pitch','')} {data.get('velo','')}</span>",
-        f"<span class='chip'>Count: {data.get('count','')}</span>",
-        f"<span class='chip'>Zone: {data.get('zone','')}</span>",
-        f"<span class='chip'>Contact: {data.get('contact_type','')}</span>",
-        f"<span class='chip'>Direction: {data.get('direction','')}</span>",
-        f"<span class='chip'>Quality: {data.get('quality','')}</span>",
-        f"<span class='chip'>Situation: {data.get('situation','')}</span>",
-    ])
-
     panel_start()
     section_title("Live AB Card")
 
-    html = f"""
-    <div class="ab-card">
-        <div class="muted" style="font-weight:900;">
-            {p + 1}. {name} • AB {ab}
-        </div>
+    st.caption(f"{p + 1}. {name} • AB {ab}")
 
-        <div style="font-size:34px;font-weight:1000;margin:8px 0;">
-            {result_dot(result)} {result or "-"}
-        </div>
+    st.markdown(f"## {result_dot(result)} {result or '-'}")
 
-        <div>
-            {chips_html}
-        </div>
+    c1, c2 = st.columns(2)
 
-        <hr>
+    with c1:
+        st.metric("Progress", progress)
+        st.metric("Pitch", f"{data.get('pitch','')} {data.get('velo','')}".strip() or "-")
+        st.metric("Zone", data.get("zone", "") or "-")
+        st.metric("Contact", data.get("contact_type", "") or "-")
 
-        <div class="muted">
-            {comment if comment else "No comment yet."}
-        </div>
-    </div>
-    """
+    with c2:
+        st.metric("Next", next_step)
+        st.metric("Count", data.get("count", "") or "-")
+        st.metric("Direction", data.get("direction", "") or "-")
+        st.metric("Quality", data.get("quality", "") or "-")
 
-    st.markdown(html, unsafe_allow_html=True)
+    st.divider()
+
+    st.caption("Comment")
+    st.write(comment or "No comment yet.")
 
     if next_step == "Complete":
         st.success("✅ At-bat complete")
