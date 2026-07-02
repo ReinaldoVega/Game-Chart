@@ -17,6 +17,11 @@ st.set_page_config(
     layout="wide",
 )
 
+st.warning("TEST MODE")
+
+if st.button("TEST CLICK"):
+    st.success("CLICK FUNCIONA")
+
 
 # =========================
 # STATE
@@ -920,7 +925,7 @@ def exports_panel():
 
 init_state()
 css()
-#theme_toggle()
+theme_toggle()
 
 if st.session_state.screen == "game_center":
     game_center()
