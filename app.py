@@ -7,7 +7,7 @@ from config import *
 from csv_export import export_chart_csv
 from pdf_export import export_chart_pdf
 from database import load_games, save_game, delete_game, get_game
-
+from rules_engine import apply_result_rules, contact_fields_should_show
 
 st.set_page_config(
     page_title="TigerVision",
@@ -365,8 +365,16 @@ def button_group(title, options, field, p, ab, cols_count=4):
             with col:
                 if st.button(label, key=f"{field}_{p}_{ab}_{opt}", use_container_width=True):
                     st.session_state.chart_data[p][key][field] = opt
-                    autosave()
-                    st.rerun()
+
+                 if field == "result":
+                    st.session_state.chart_data[p][key], note = apply_result_rules(
+                    st.session_state.chart_data[p][key]
+                    )
+                     if note:
+                      st.toast(note)
+
+                 autosave()
+                 st.rerun()
 
 
 def result_dot(result):
